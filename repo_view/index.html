@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repo View</title>
+    <meta name="description" content="A premium GitHub repository explorer with README, tree, file preview, and local repo analysis.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/base16/material-darker.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+    <script defer src="app.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="window-chrome">
+            <div class="traffic-lights" aria-hidden="true">
+                <span class="traffic-light close"></span>
+                <span class="traffic-light minimize"></span>
+                <span class="traffic-light maximize"></span>
+            </div>
+
+            <div class="brand-lockup">
+                <div class="brand-orb"></div>
+                <div>
+                    <p class="brand-kicker">Repository Workspace</p>
+                    <h1>Repo View</h1>
+                </div>
+            </div>
+
+            <form id="repo-form" class="repo-form" autocomplete="off">
+                <label class="sr-only" for="repo-url">GitHub repository URL</label>
+                <div class="repo-input-wrap">
+                    <span class="repo-input-icon" aria-hidden="true"></span>
+                    <input
+                        id="repo-url"
+                        name="repo-url"
+                        type="text"
+                        spellcheck="false"
+                        placeholder="owner/repo or https://github.com/owner/repo"
+                        required
+                    >
+                </div>
+                <button id="explore-button" type="submit">Inspect Repo</button>
+            </form>
+
+            <div class="header-status">
+                <div id="global-loader" class="spinner is-hidden" aria-hidden="true"></div>
+                <div id="status-pill" class="status-pill" aria-live="polite">Ready</div>
+            </div>
+
+            <div id="progress-bar" class="progress-bar"></div>
+        </header>
+
+        <div class="app-layout">
+            <aside class="sidebar">
+                <section class="hero-card">
+                    <p class="eyebrow">Premium GitHub Explorer</p>
+                    <h2>Inspect structure, README, files, and repo insights in one polished window.</h2>
+                    <p class="muted-copy">
+                        Separate panels, faster scanning, better typography, and a local repo analyst without adding an API key.
+                    </p>
+
+                    <div class="hero-points">
+                        <div class="metric-card">
+                            <strong>Tree View</strong>
+                            <span>Folders first with quick file badges</span>
+                        </div>
+                        <div class="metric-card">
+                            <strong>Live Preview</strong>
+                            <span>Markdown, code, and images</span>
+                        </div>
+                        <div class="metric-card">
+                            <strong>Local Analyst</strong>
+                            <span>Ask about layout, stack, files, and tests</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="repo-info" class="repo-card is-hidden">
+                    <div class="repo-card-top">
+                        <div>
+                            <p class="eyebrow">Loaded Repository</p>
+                            <h2 id="repo-name-display">owner/repo</h2>
+                        </div>
+                        <div id="repo-language-pill" class="language-pill">Mixed</div>
+                    </div>
+
+                    <p id="repo-desc" class="repo-desc">Repository description appears here.</p>
+
+                    <div class="repo-stats">
+                        <div class="repo-stat">
+                            <span class="stat-label">Stars</span>
+                            <strong id="repo-stars">0</strong>
+                        </div>
+                        <div class="repo-stat">
+                            <span class="stat-label">Forks</span>
+                            <strong id="repo-forks">0</strong>
+                        </div>
+                        <div class="repo-stat">
+                            <span class="stat-label">Updated</span>
+                            <strong id="repo-updated">-</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="explorer-card">
+                    <div id="tree-header" class="section-head is-hidden">
+                        <span>File Explorer</span>
+                        <span class="branch-pill">
+                            <span class="branch-dot"></span>
+                            <span id="branch-name">main</span>
+                        </span>
+                    </div>
+
+                    <div id="file-tree" class="file-tree">
+                        <div class="empty-block">
+                            <div class="empty-icon"></div>
+                            <h3>No repository loaded</h3>
+                            <p>Paste a GitHub repo above to unlock the file tree and preview panels.</p>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+
+            <main class="workspace">
+                <div id="error-alert" class="toast is-hidden" role="alert">
+                    <div class="toast-icon"></div>
+                    <div>
+                        <strong>Something needs attention</strong>
+                        <p id="error-msg"></p>
+                    </div>
+                    <button id="dismiss-error" class="ghost-button" type="button">Dismiss</button>
+                </div>
+
+                <section id="welcome-state" class="welcome-panel">
+                    <div class="welcome-grid">
+                        <div class="welcome-copy">
+                            <p class="eyebrow">Design-forward repo browsing</p>
+                            <h2>A calmer way to read GitHub repositories.</h2>
+                            <p class="muted-copy">
+                                Load a project and move through its README, file tree, code, images, and quick repository answers without the clutter of a browser tab maze.
+                            </p>
+
+                            <div class="sample-chips">
+                                <button class="example-chip" type="button" data-example="vercel/next.js">vercel/next.js</button>
+                                <button class="example-chip" type="button" data-example="openai/openai-python">openai/openai-python</button>
+                                <button class="example-chip" type="button" data-example="facebook/react">facebook/react</button>
+                            </div>
+                        </div>
+
+                        <div class="welcome-preview">
+                            <div class="preview-window">
+                                <div class="preview-bar">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar">
+                                        <div class="preview-line wide"></div>
+                                        <div class="preview-line"></div>
+                                        <div class="preview-line"></div>
+                                        <div class="preview-line short"></div>
+                                    </div>
+                                    <div class="preview-main">
+                                        <div class="preview-panel tall"></div>
+                                        <div class="preview-row">
+                                            <div class="preview-panel"></div>
+                                            <div class="preview-panel"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="workspace-surface" class="workspace-surface is-hidden">
+                    <div id="tabs-container" class="tabs">
+                        <button id="tab-readme" class="tab-button is-active" type="button">README</button>
+                        <button id="tab-viewer" class="tab-button is-hidden" type="button">File Viewer</button>
+                        <button id="tab-ask-ai" class="tab-button accent is-hidden" type="button">Local Analyst</button>
+                    </div>
+
+                    <div id="content-loader" class="content-loader is-hidden">
+                        <div class="loader-ring"></div>
+                        <p>Loading content...</p>
+                    </div>
+
+                    <div class="panel-stack">
+                        <section id="panel-readme" class="panel">
+                            <div id="readme-content" class="panel-scroll markdown-body"></div>
+                        </section>
+
+                        <section id="panel-viewer" class="panel is-hidden">
+                            <div class="viewer-toolbar">
+                                <div>
+                                    <p class="eyebrow">File Preview</p>
+                                    <h3 id="viewer-filename">Select a file from the explorer</h3>
+                                </div>
+                                <div class="viewer-meta">
+                                    <span id="viewer-size" class="viewer-size"></span>
+                                    <a id="viewer-raw-link" href="#" target="_blank" rel="noreferrer noopener">Open raw</a>
+                                </div>
+                            </div>
+
+                            <div id="image-viewer" class="image-viewer is-hidden">
+                                <div class="image-frame">
+                                    <img id="viewer-image" src="" alt="Selected repository file preview">
+                                </div>
+                            </div>
+
+                            <pre id="code-viewer" class="code-viewer"><code id="code-content"></code></pre>
+                        </section>
+
+                        <section id="panel-ask-ai" class="panel analyst-panel is-hidden">
+                            <div class="analyst-head">
+                                <div>
+                                    <p class="eyebrow">Local Repo Analyst</p>
+                                    <h3>Ask about the loaded repository</h3>
+                                </div>
+                                <div class="prompt-chips">
+                                    <button class="prompt-chip" type="button" data-prompt="Summarize this project in plain English">Summary</button>
+                                    <button class="prompt-chip" type="button" data-prompt="What is the folder structure?">Structure</button>
+                                    <button class="prompt-chip" type="button" data-prompt="What technologies are used?">Tech Stack</button>
+                                    <button class="prompt-chip" type="button" data-prompt="List all test files">Tests</button>
+                                </div>
+                            </div>
+
+                            <div id="chat-messages" class="chat-messages">
+                                <article class="chat-message analyst">
+                                    <div class="chat-badge">AI</div>
+                                    <div class="chat-body">
+                                        <strong>Ask about the repo.</strong>
+                                        <p>
+                                            I can answer questions about structure, file counts, technologies, README content, test coverage clues,
+                                            entry points, and common config files using the repository data already loaded in the page.
+                                        </p>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <form id="chat-form" class="chat-form">
+                                <label class="sr-only" for="chat-input">Ask about the repository</label>
+                                <input id="chat-input" type="text" autocomplete="off" placeholder="Ask a question about the repo...">
+                                <button type="submit">Send</button>
+                            </form>
+                        </section>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>
