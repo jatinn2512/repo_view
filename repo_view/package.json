@@ -1,0 +1,16 @@
+{
+  "name": "repo-view-monorepo",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n frontend,backend -c cyan,green \"npm run dev --workspace frontend\" \"backend\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --app-dir backend --host 127.0.0.1 --port 8000\"",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:backend": "backend\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --app-dir backend --host 127.0.0.1 --port 8000",
+    "build": "npm run build --workspace frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
